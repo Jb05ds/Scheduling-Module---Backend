@@ -46,4 +46,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function createdSchedules() 
+    {
+        return $this->hasMany(Schedule::class, 'created_by');
+    }
+
+    public function assignedSchedules()
+    {
+        return $this.hasMany(Schedule::class, 'assigned_to');
+    }
 }
