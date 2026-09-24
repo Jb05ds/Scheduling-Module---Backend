@@ -54,6 +54,6 @@ class User extends Authenticatable
 
     public function assignedSchedules()
     {
-        return $this.hasMany(Schedule::class, 'assigned_to');
+        return $this->hasMany(Schedule::class, 'assigned_to');
     }
 }

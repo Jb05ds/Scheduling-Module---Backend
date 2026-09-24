@@ -20,3 +20,9 @@ Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
 Route::patch('/schedules/{schedule}/cancel', [ScheduleController::class, 'cancel']);
 
 Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
+
+Route::get('/users', function() {
+    return response()->json([
+        'data' => \App\Models\User::all(),
+    ]);
+});
