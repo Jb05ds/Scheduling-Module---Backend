@@ -69,7 +69,7 @@ class ScheduleController extends Controller
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'assigned_to' => $validated['assigned_to'] ?? null,
-            'created_by' => 1,
+            'created_by' => $request->user()->getAuthIdentifier(),  
             'status' => 'scheduled',
         ]);
 
