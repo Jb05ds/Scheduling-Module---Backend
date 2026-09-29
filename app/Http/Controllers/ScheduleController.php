@@ -47,21 +47,25 @@ class ScheduleController extends Controller
     {
         $validated = $request->validated();
 
-        $conflict = Schedule::where('scheduled_date', $validated['scheduled_date'])
-            ->where('assigned_to', $validated['assigned_to'] ?? null)
-            ->where('status', '!=', 'cancelled')
-            ->where(function ($query) use ($validated) {
-                $query->where('start_time', '<', $validated['end_time'])
-                    ->where('end_time', '>', $validated['start_time']);
-            })
-            ->exists();
+        if($request->input('assigned_to') !== null
+            && $request->input('assigned_to') !== '') {
 
-        if ($conflict) {
-            throw ValidationException::withMessages([
-                'scheduled_date' => 'The assigned user already has a schedule during this time.',
-            ]);
+            $conflict = Schedule::where('scheduled_date', $validated['scheduled_date'])
+                ->where('assigned_to', $validated['assigned_to'] ?? null)
+                ->where('status', '!=', 'cancelled')
+                ->where(function ($query) use ($validated) {
+                    $query->where('start_time', '<', $validated['end_time'])
+                        ->where('end_time', '>', $validated['start_time']);
+                })
+                ->exists();
+
+            if ($conflict) {
+                throw ValidationException::withMessages([
+                    'scheduled_date' => 'The assigned user already has a schedule during this time.',
+                ]);
+            }
         }
-
+        
         $schedule = Schedule::create([
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
