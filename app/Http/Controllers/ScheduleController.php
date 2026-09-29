@@ -151,13 +151,22 @@ class ScheduleController extends Controller
 
     public function complete(Schedule $schedule)
     {
-        $schedule->update([
-            'status' => 'completed'
-        ]);
+        if ($schedule->status == 'scheduled') {
 
-        return response()->json([
-            'message' => 'The schedule has been completed',
-            'data' => $schedule,
-        ]);
+            $schedule->update([
+                'status' => 'completed'
+            ]);
+
+            return response()->json([
+                'message' => 'The schedule has been completed',
+                'data' => $schedule,
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Only scheduled items can be marked as completed',
+            ]);
+        }
+
+        
     }
 }
