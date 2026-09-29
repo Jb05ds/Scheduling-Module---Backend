@@ -65,7 +65,7 @@ class ScheduleController extends Controller
                 ]);
             }
         }
-        
+
         $schedule = Schedule::create([
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
@@ -146,6 +146,18 @@ class ScheduleController extends Controller
 
         return response()->json([
             'message' => 'Your schedule has been deleted'
+        ]);
+    }
+
+    public function complete(Schedule $schedule)
+    {
+        $schedule->update([
+            'status' => 'completed'
+        ]);
+
+        return response()->json([
+            'message' => 'The schedule has been completed',
+            'data' => $schedule,
         ]);
     }
 }

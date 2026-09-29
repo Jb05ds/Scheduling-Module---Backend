@@ -27,5 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/schedules/{schedule}', [ScheduleController::class, 'show']);
     Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
     Route::patch('/schedules/{schedule}/cancel', [ScheduleController::class, 'cancel']);
+    Route::patch('/schedules/{schedule}/complete', [ScheduleController::class, 'complete']);
     Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
 });
