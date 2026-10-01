@@ -56,7 +56,7 @@ class ScheduleController extends Controller
                 ->where(function ($query) use ($validated) {
                     $query->where('start_time', '<', $validated['end_time'])
                         ->where('end_time', '>', $validated['start_time']);
-                })
+                })  
                 ->exists();
 
             if ($conflict) {
