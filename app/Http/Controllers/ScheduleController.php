@@ -130,14 +130,20 @@ class ScheduleController extends Controller
 
     public function cancel(Schedule $schedule)
     {
-        $schedule->update([
-            'status' => 'cancelled'
-        ]);
+        if($schedule->status == 'scheduled') {
+            $schedule->update([
+                'status' => 'cancelled'
+            ]);
 
-        return response()->json([
-            'message' => 'The schedule has been cancelled',
-            'data' => $schedule,
-        ]);
+            return response()->json([
+                'message' => 'The schedule has been cancelled',
+                'data' => $schedule,
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Only scheduled items can be cancelled'
+            ]);
+        }
     }
 
     public function destroy(Schedule $schedule)
