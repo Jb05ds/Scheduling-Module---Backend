@@ -10,16 +10,34 @@ use Illuminate\Validation\ValidationException;
 
 class ScheduleController extends Controller
 {
+
     public function index(Request $request)
     {
         $validated = $request->validate([
+            'scope' => ['nullable', 'in:mine,assigned'],
             'status' => ['nullable', 'in:scheduled,completed,cancelled'],
             'scheduled_date' => ['nullable', 'date'],
             'assigned_to' => ['nullable', 'exists:users,id'],
             'search' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $userId = $request->user()->getAuthIdentifier();
+
         $query = Schedule::with(['creator', 'assignee']);
+
+        if (($validated['scope'] ?? 'mine') === 'assigned') {
+            $query->where('created_by', $userId)
+                ->whereNotNull('assigned_to')
+                ->where('assigned_to', '!=', $userId);
+        } else {
+            $query->where(function ($q) use ($userId) {
+                $q->where('assigned_to', $userId)
+                    ->orWhere(function ($q) use ($userId) {
+                        $q->where('created_by', $userId)
+                            ->whereNull('assigned_to');
+                    });
+            });
+        }
 
         if (!empty($validated['status'])) {
             $query->where('status', $validated['status']);
@@ -43,6 +61,7 @@ class ScheduleController extends Controller
             'data' => $schedules,
         ]);
     }
+
     public function store(StoreScheduleRequest $request)
     {
         $validated = $request->validated();
@@ -56,7 +75,7 @@ class ScheduleController extends Controller
                 ->where(function ($query) use ($validated) {
                     $query->where('start_time', '<', $validated['end_time'])
                         ->where('end_time', '>', $validated['start_time']);
-                })  
+                })
                 ->exists();
 
             if ($conflict) {
@@ -73,7 +92,7 @@ class ScheduleController extends Controller
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'assigned_to' => $validated['assigned_to'] ?? null,
-            'created_by' => $request->user()->getAuthIdentifier(),  
+            'created_by' => $request->user()->getAuthIdentifier(),
             'status' => 'scheduled',
         ]);
 
@@ -83,8 +102,10 @@ class ScheduleController extends Controller
         ], 201);
     }
 
-    public function show(Schedule $schedule)
+    public function show(Request $request, Schedule $schedule)
     {
+        $this->authorizeParticipant($request, $schedule);
+
         $schedule->load(['creator', 'assignee']);
 
         return response()->json([
@@ -94,22 +115,26 @@ class ScheduleController extends Controller
 
     public function update(UpdateScheduleRequest $request, Schedule $schedule)
     {
+        $this->authorizeCreator($request, $schedule);
+
         $validated = $request->validated();
 
-        $conflict = Schedule::where('scheduled_date', $validated['scheduled_date'])
-            ->where('assigned_to', $validated['assigned_to'] ?? null)
-            ->where('status', '!=', 'cancelled')
-            ->where('id', '!=', $schedule->id)
-            ->where(function ($query) use ($validated) {
-                $query->where('start_time', '<', $validated['end_time'])
-                    ->where('end_time', '>', $validated['start_time']);
-            })
-            ->exists();
+        if (!empty($validated['assigned_to'])) {
+            $conflict = Schedule::where('scheduled_date', $validated['scheduled_date'])
+                ->where('assigned_to', $validated['assigned_to'])
+                ->where('status', '!=', 'cancelled')
+                ->where('id', '!=', $schedule->id)
+                ->where(function ($query) use ($validated) {
+                    $query->where('start_time', '<', $validated['end_time'])
+                        ->where('end_time', '>', $validated['start_time']);
+                })
+                ->exists();
 
-        if ($conflict) {
-            throw ValidationException::withMessages([
-                'scheduled_date' => 'The assigned user already has a schedule during this time.',
-            ]);
+            if ($conflict) {
+                throw ValidationException::withMessages([
+                    'scheduled_date' => 'The assigned user already has a schedule during this time.',
+                ]);
+            }
         }
 
         $schedule->update([
@@ -124,12 +149,14 @@ class ScheduleController extends Controller
 
         return response()->json([
             'message' => 'Schedule updated successfully.',
-            'data' => $schedule,
+            'data' => $schedule->load(['creator', 'assignee']),
         ]);
     }
 
-    public function cancel(Schedule $schedule)
+    public function cancel(Request $request, Schedule $schedule)
     {
+        $this->authorizeCreator($request, $schedule);
+
         if($schedule->status == 'scheduled') {
             $schedule->update([
                 'status' => 'cancelled'
@@ -146,8 +173,10 @@ class ScheduleController extends Controller
         }
     }
 
-    public function destroy(Schedule $schedule)
+    public function destroy(Request $request, Schedule $schedule)
     {
+        $this->authorizeCreator($request, $schedule);
+
         $schedule->delete();
 
         return response()->json([
@@ -155,8 +184,11 @@ class ScheduleController extends Controller
         ]);
     }
 
-    public function complete(Schedule $schedule)
+    public function complete(Request $request, Schedule $schedule)
     {
+
+        $this->authorizeParticipant($request, $schedule);
+
         if ($schedule->status == 'scheduled') {
 
             $schedule->update([
@@ -172,7 +204,25 @@ class ScheduleController extends Controller
                 'message' => 'Only scheduled items can be marked as completed',
             ]);
         }
+    }
 
-        
+    private function authorizeParticipant(Request $request, Schedule $schedule): void
+    {
+        $userId = (int) $request->user()->getAuthIdentifier();
+
+        abort_unless(
+            (int) $schedule->created_by === $userId || (int) $schedule->assigned_to === $userId,
+            403,
+            'You do not have access to this schedule.'
+        );
+    }
+
+    private function authorizeCreator(Request $request, Schedule $schedule): void
+    {
+        abort_unless(
+            (int) $schedule->created_by === (int) $request->user()->getAuthIdentifier(),
+            403,
+            'Only the person who created this schedule can do that.'
+        );
     }
 }

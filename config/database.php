@@ -59,10 +59,12 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => base_path('certs/isrgrootx1.pem'),
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true,
-            ]) : [],
+            'options' => extension_loaded('pdo_mysql') && env('DB_SSL_CA')
+                ? [
+                    PDO::MYSQL_ATTR_SSL_CA => base_path(env('DB_SSL_CA')),
+                    PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true,
+                ]
+                : [],
         ],
 
         'mariadb' => [
