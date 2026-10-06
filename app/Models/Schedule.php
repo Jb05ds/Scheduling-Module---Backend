@@ -14,9 +14,17 @@ class Schedule extends Model
         'start_time',
         'end_time',
         'status',
+        'reminder_sent_at',
         'created_by',
         'assigned_to',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'reminder_sent_at' => 'datetime',
+        ];
+    }
 
     public function creator(): BelongsTo
     {
