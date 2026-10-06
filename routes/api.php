@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\PushSubscriptionController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -21,6 +22,10 @@ Route::middleware('auth:sanctum')->group(function () {
             'data' => \App\Models\User::all(),
         ]);
     });
+
+    Route::get('/push/public-key', [PushSubscriptionController::class, 'publicKey']);
+    Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store']);
+    Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
 
     Route::post('/schedules', [ScheduleController::class, 'store']);
     Route::get('/schedules', [ScheduleController::class, 'index']);
