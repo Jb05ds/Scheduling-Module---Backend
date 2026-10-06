@@ -25,7 +25,6 @@ class SendScheduleReminders extends Command
         $due = Schedule::with(['creator', 'assignee'])
             ->where('status', 'scheduled')
             ->whereNull('reminder_sent_at')
-            // Both dates, so a window that crosses midnight still works.
             ->whereBetween('scheduled_date', [$now->toDateString(), $until->toDateString()])
             ->get()
             ->filter(function (Schedule $schedule) use ($now, $until, $timezone) {
@@ -37,16 +36,6 @@ class SendScheduleReminders extends Command
         $sent = 0;
 
         foreach ($due as $schedule) {
-            // Claim it first, so two overlapping runs can never send it twice.
-            $claimed = Schedule::whereKey($schedule->id)
-                ->whereNull('reminder_sent_at')
-                ->update(['reminder_sent_at' => now()]);
-
-            if (!$claimed) {
-                continue;
-            }
-
-            // Someone it was assigned to, otherwise the person who made it.
             $recipient = $schedule->assignee ?? $schedule->creator;
 
             if (!$recipient) {
@@ -58,7 +47,14 @@ class SendScheduleReminders extends Command
 
             try {
                 $recipient->notify(new ScheduleReminder($schedule, $minutesLeft));
-                $sent++;
+
+                $claimed = Schedule::whereKey($schedule->id)
+                    ->whereNull('reminder_sent_at')
+                    ->update(['reminder_sent_at' => now()]);
+
+                if ($claimed) {
+                    $sent++;
+                }
             } catch (\Throwable $e) {
                 Log::warning("Could not send reminder for schedule {$schedule->id}: " . $e->getMessage());
             }
