@@ -5,8 +5,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\CronController;
 
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/cron/send-reminders', [CronController::class, 'sendReminders']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
