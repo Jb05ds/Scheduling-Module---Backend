@@ -56,7 +56,11 @@ class SendScheduleReminders extends Command
                     $sent++;
                 }
             } catch (\Throwable $e) {
-                Log::warning("Could not send reminder for schedule {$schedule->id}: " . $e->getMessage());
+                $this->error("Could not send reminder for schedule {$schedule->id}: {$e->getMessage()}");
+                Log::error("Could not send reminder for schedule {$schedule->id}", [
+                    'message' => $e->getMessage(),
+                    'exception' => get_class($e),
+                ]);
             }
         }
 
