@@ -187,7 +187,7 @@ class ScheduleController extends Controller
             ]);
         }
     }
-
+    
     public function destroy(Request $request, Schedule $schedule)
     {
         $this->authorizeCreator($request, $schedule);
@@ -218,6 +218,11 @@ class ScheduleController extends Controller
                 'message' => 'Only scheduled items can be marked as completed',
             ]);
         }
+    }
+
+    public function repeat(Request $request, Schedule $schedule) 
+    {
+        
     }
 
     private function notifyAssignee(Schedule $schedule, Request $request): void
