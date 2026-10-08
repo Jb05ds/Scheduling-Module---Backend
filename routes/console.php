@@ -8,6 +8,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('schedules:send-reminders')
+$reminders = Schedule::command('schedules:send-reminders')
     ->everyMinute()
     ->withoutOverlapping();
+
+if (is_writable('/proc/1/fd/1')) {
+    $reminders->appendOutputTo('/proc/1/fd/1');
+}

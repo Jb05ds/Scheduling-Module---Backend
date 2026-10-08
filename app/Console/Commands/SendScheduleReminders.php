@@ -22,16 +22,17 @@ class SendScheduleReminders extends Command
         $now = Carbon::now($timezone);
         $until = $now->copy()->addMinutes($minutes);
 
-        $due = Schedule::with(['creator', 'assignee'])
+        $candidates = Schedule::with(['creator', 'assignee'])
             ->where('status', 'scheduled')
             ->whereNull('reminder_sent_at')
             ->whereBetween('scheduled_date', [$now->toDateString(), $until->toDateString()])
-            ->get()
-            ->filter(function (Schedule $schedule) use ($now, $until, $timezone) {
-                $start = $this->startOf($schedule, $timezone);
+            ->get();
 
-                return $start->gt($now) && $start->lte($until);
-            });
+        $due = $candidates->filter(function (Schedule $schedule) use ($now, $until, $timezone) {
+            $start = $this->startOf($schedule, $timezone);
+
+            return $start->gt($now) && $start->lte($until);
+        });
 
         $sent = 0;
 
@@ -64,7 +65,7 @@ class SendScheduleReminders extends Command
             }
         }
 
-        $this->info("Sent {$sent} reminder(s).");
+        $this->info("[{$now->toDateTimeString()} {$timezone}] candidates: {$candidates->count()}, due: {$due->count()}, sent: {$sent}");
 
         return self::SUCCESS;
     }
