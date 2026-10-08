@@ -44,4 +44,4 @@ class ScheduleReminder extends Notification
     {
         return Carbon::createFromFormat('H:i', substr((string) $time, 0, 5))->format('g:i A');
     }
-}
+}   

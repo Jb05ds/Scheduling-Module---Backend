@@ -33,7 +33,6 @@ class ScheduleAssigned extends Notification
             ->title('New schedule from ' . ($schedule->creator?->name ?? 'someone'))
             ->body("{$schedule->title} · {$date}, {$start}–{$end}")
             ->icon('/favicon.ico')
-            // Same tag = a newer notification for the same schedule replaces the old one.
             ->tag('schedule-' . $schedule->id)
             ->data([
                 'url' => '/',

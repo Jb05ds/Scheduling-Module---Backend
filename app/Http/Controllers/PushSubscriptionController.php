@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 
 class PushSubscriptionController extends Controller
 {
-    /** The public VAPID key the browser needs to create a subscription. */
     public function publicKey()
     {
         return response()->json([

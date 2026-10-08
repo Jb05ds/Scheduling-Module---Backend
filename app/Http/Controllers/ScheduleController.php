@@ -12,12 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ScheduleController extends Controller
 {
-    /**
-     * scope=mine     (default) my calendar: schedules assigned to me, plus personal
-     *                ones I created without an assignee.
-     * scope=assigned schedules I created and assigned to someone else. These show up
-     *                on the assignee's calendar, never on mine.
-     */
+
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -129,14 +124,11 @@ class ScheduleController extends Controller
         $validated = $request->validated();
         $previousAssignee = $schedule->assigned_to;
 
-        // A new time or a new assignee needs a fresh "starting soon" reminder.
         $resetReminder =
             substr((string) $schedule->scheduled_date, 0, 10) !== $validated['scheduled_date']
             || substr((string) $schedule->start_time, 0, 5) !== substr($validated['start_time'], 0, 5)
             || (int) $schedule->assigned_to !== (int) ($validated['assigned_to'] ?? 0);
 
-        // Same rule as store(): only check for clashes when someone is assigned.
-        // (Without this, any two unassigned schedules at the same time "clash".)
         if (!empty($validated['assigned_to'])) {
             $conflict = Schedule::where('scheduled_date', $validated['scheduled_date'])
                 ->where('assigned_to', $validated['assigned_to'])
@@ -166,7 +158,6 @@ class ScheduleController extends Controller
             ...($resetReminder ? ['reminder_sent_at' => null] : []),
         ]);
 
-        // Only notify when the schedule was handed to someone new.
         if ((int) $schedule->assigned_to !== (int) $previousAssignee) {
             $this->notifyAssignee($schedule, $request);
         }
@@ -210,7 +201,6 @@ class ScheduleController extends Controller
 
     public function complete(Request $request, Schedule $schedule)
     {
-        // The assignee can mark their own task as done, not only the creator.
         $this->authorizeParticipant($request, $schedule);
 
         if ($schedule->status == 'scheduled') {
@@ -230,15 +220,11 @@ class ScheduleController extends Controller
         }
     }
 
-    /**
-     * Sends a push notification to the assignee. A failed push must never break
-     * saving the schedule, so errors are logged and swallowed.
-     */
     private function notifyAssignee(Schedule $schedule, Request $request): void
     {
         $assigneeId = $schedule->assigned_to;
 
-        // Nobody to tell: unassigned, or assigned to the person who made it.
+
         if (!$assigneeId || (int) $assigneeId === (int) $request->user()->getAuthIdentifier()) {
             return;
         }
@@ -250,7 +236,6 @@ class ScheduleController extends Controller
         }
     }
 
-    /** The creator or the assignee may view a schedule (and complete it). */
     private function authorizeParticipant(Request $request, Schedule $schedule): void
     {
         $userId = (int) $request->user()->getAuthIdentifier();
@@ -262,7 +247,6 @@ class ScheduleController extends Controller
         );
     }
 
-    /** Only the creator may edit, cancel or delete a schedule. */
     private function authorizeCreator(Request $request, Schedule $schedule): void
     {
         abort_unless(

@@ -20,8 +20,9 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://scheduling-module.onrender.com'
-        ],
+    'http://localhost:5173',
+    'https://scheduling-module.onrender.com',
+    ],
 
     'allowed_origins_patterns' => [],
 
