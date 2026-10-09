@@ -17,6 +17,9 @@ class Schedule extends Model
         'reminder_sent_at',
         'created_by',
         'assigned_to',
+        'series_id',
+        'repeat_type',
+        'repeat_until',
     ];
 
     protected function casts(): array
