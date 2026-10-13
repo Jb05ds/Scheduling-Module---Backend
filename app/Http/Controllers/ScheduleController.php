@@ -188,6 +188,13 @@ class ScheduleController extends Controller
 
                 Schedule::insert($rowsToInsert);
             });
+
+            $createdSchedules = Schedule::where('series_id', $series_id)->get();
+
+            foreach ($createdSchedules as $schedule) {
+                $this->notifyAssignee($schedule, $request);
+            }
+
             return response()->json([
                     'message' => 'Schedules has been created',
                     'data' => $series_id
