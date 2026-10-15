@@ -19,11 +19,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     
     ->withMiddleware(function (Middleware $middleware): void {
-        logger()->info('CORS diagnostic', [
-            'cors_paths' => config('cors.paths'),
-            'allowed_origins' => config('cors.allowed_origins'),
-            'environment' => app()->environment(),
-        ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('api/*')) {
