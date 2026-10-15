@@ -17,7 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../routes/channels.php',
         ['middleware' => ['api', 'auth:sanctum']],
     )
+    
     ->withMiddleware(function (Middleware $middleware): void {
+        logger()->info('CORS diagnostic', [
+            'cors_paths' => config('cors.paths'),
+            'allowed_origins' => config('cors.allowed_origins'),
+            'environment' => app()->environment(),
+        ]);
+
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('api/*')) {
                 return null;
@@ -26,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return route('login');
         });
     })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             if ($request->is('api/*') || $request->is('broadcasting/*')) {
