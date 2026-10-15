@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Foundation\Application;
@@ -12,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['middleware' => ['api', 'auth:sanctum']],
+    )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('api/*')) {
@@ -22,11 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-    $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
-        if ($request->is('api/*')) {
-            return true;
-        }
+        $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
+            if ($request->is('api/*') || $request->is('broadcasting/*')) {
+                return true;
+            }
 
-        return $request->expectsJson();
-    });
+            return $request->expectsJson();
+        });
     })->create();

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Events\ScheduleChanged;
 
 class ScheduleController extends Controller
 {
@@ -105,6 +106,10 @@ class ScheduleController extends Controller
 
             $this->notifyAssignee($schedule, $request);
 
+            if ($schedule->assigned_to !== null) {
+                event(new ScheduleChanged($schedule));
+            }
+
             return response()->json([
                 'message' => 'Schedule created successfully.',
                 'data' => $schedule,
@@ -193,6 +198,10 @@ class ScheduleController extends Controller
 
             foreach ($createdSchedules as $schedule) {
                 $this->notifyAssignee($schedule, $request);
+            }
+
+            if ($schedule->assigned_to !== null) {
+                event(new ScheduleChanged($schedule));
             }
 
             return response()->json([
