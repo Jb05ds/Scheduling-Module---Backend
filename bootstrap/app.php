@@ -19,8 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web();    $middleware->api();
-
+        
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->statefulApi();
+ 
         $middleware->redirectGuestsTo(function (Request $request) {
 
             if ($request->is('api/*')) {
